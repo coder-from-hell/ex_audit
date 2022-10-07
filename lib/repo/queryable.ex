@@ -9,15 +9,19 @@ defmodule ExAudit.Queryable do
 
   @compile {:inline, version_schema: 0}
 
-  def update_all(module, queryable, updates, opts) do
-    Ecto.Repo.Queryable.update_all(module, queryable, updates, opts)
+  def update_all(module, name, queryable, updates, opts) do
+    tuplet = Ecto.Repo.Supervisor.tuplet(name, opts)
+
+    Ecto.Repo.Queryable.update_all(module, queryable, updates, tuplet)
   end
 
-  def delete_all(module, queryable, opts) do
-    Ecto.Repo.Queryable.delete_all(module, queryable, opts)
+  def delete_all(module, name, queryable, opts) do
+    tuplet = Ecto.Repo.Supervisor.tuplet(name, opts)
+
+    Ecto.Repo.Queryable.delete_all(module, queryable, tuplet)
   end
 
-  def history(module, struct, opts) do
+  def history(module, name, struct, opts) do
     query =
       from(
         v in version_schema(),
@@ -40,7 +44,8 @@ defmodule ExAudit.Queryable do
           )
       end
 
-    versions = Ecto.Repo.Queryable.all(module, query, opts)
+    tuplet = Ecto.Repo.Supervisor.tuplet(name, opts)
+    versions = Ecto.Repo.Queryable.all(module, query, tuplet)
 
     if Keyword.get(opts, :render_struct, false) do
       {versions, oldest_struct} =
@@ -76,16 +81,16 @@ defmodule ExAudit.Queryable do
 
   def history_query(%{id: id, __struct__: struct}) do
     from(
-        v in version_schema(),
-        where: v.entity_id == ^id,
-        where: v.entity_schema == ^struct,
-        order_by: [desc: :recorded_at]
-      )
+      v in version_schema(),
+      where: v.entity_id == ^id,
+      where: v.entity_schema == ^struct,
+      order_by: [desc: :recorded_at]
+    )
   end
 
   @drop_fields [:__meta__, :__struct__]
 
-  def revert(module, version, opts) do
+  def revert(module, _name, version, opts) do
     import Ecto.Query
 
     # get the history of the entity after this version

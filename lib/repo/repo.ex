@@ -206,11 +206,11 @@ defmodule ExAudit.Repo do
       # additional functions
 
       def history(struct, opts \\ []) do
-        ExAudit.Queryable.history(__MODULE__, struct, opts)
+        ExAudit.Queryable.history(__MODULE__, get_dynamic_repo(), struct, opts)
       end
 
       def revert(version, opts \\ []) do
-        ExAudit.Queryable.revert(__MODULE__, version, opts)
+        ExAudit.Queryable.revert(__MODULE__, get_dynamic_repo(), version, opts)
       end
 
       def history_query(struct) do
